@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, FileManager, TFile, MarkdownSourceView, Workspace } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
@@ -18,12 +18,22 @@ export default class MyPlugin extends Plugin {
 
 
 		const openSideNotes = async() => {
-			let currentFile = this.app.workspace.activeEditor.file
-			let currentFolder = currentFile.parent.path
-			let currentName = currentFile.basename
+			let currentFile = this.app.workspace.activeEditor!.file
+			let currentFolder = currentFile!.parent!.path
+			let currentName = currentFile!.basename
 
-			let properties = this.app.workspace.activeEditor.metadataEditor.properties
-			let sideNotesProp = properties.find(p => p.key == "Примечания") 
+
+
+
+			let properties
+			await this.app.fileManager.processFrontMatter(currentFile!, f => {properties = f})
+			let sideNotesProp = properties!["Примечания"]
+
+
+
+
+			//let properties = this.app.workspace.activeEditor!.metadataEditor.properties
+			//let sideNotesProp = properties.find(p => p.key == "Примечания") 
 			let sideNotesLink = ""
 
 			if (sideNotesProp && sideNotesProp.value) {
@@ -32,40 +42,44 @@ export default class MyPlugin extends Plugin {
 			} else {
 
 				sideNotesLink = currentFolder + "/" + currentName + " — примечания"
-				await this.app.fileManager.processFrontMatter(currentFile, (frontmatter) => { 
+				await this.app.fileManager.processFrontMatter(currentFile!, (frontmatter) => { 
 						frontmatter["Примечания"] = sideNotesLink
 					})
 			}
 			
-			let sideNotesFile = this.app.vault.getAbstractFileByPath(sideNotesLink + ".md")
+			let sideNotesFile = this.app.vault.getFiles().find(f => f.path == sideNotesLink + ".md")
 			if (!sideNotesFile) {
 				sideNotesFile = await this.app.vault.create(currentFolder + "/" + currentName + " — примечания" + ".md", "")
 			}
 
-			let sideLeaf = await this.app.workspace.createLeafBySplit(this.app.workspace.getActiveViewOfType(MarkdownView), "vertical")
-			await sideLeaf.openFile(sideNotesFile, { focus: false } );
+			let sideLeaf = this.app.workspace.createLeafBySplit(this.app.workspace.getMostRecentLeaf()!, "vertical")
+			await sideLeaf.openFile(sideNotesFile, { active: false } );
 		}
 
 
 
 		const saveQuoteToSideNotes = async () => {
-			let currentFile = this.app.workspace.activeEditor.file
-			let currentFolder = currentFile.parent.path
-			let currentName = currentFile.basename
+			let currentFile = this.app.workspace.activeEditor!.file
+			let currentFolder = currentFile!.parent!.path
+			let currentName = currentFile!.basename
 
-			let selection = await this.app.workspace.activeEditor.getSelection()
+			let selection = this.app.workspace.activeEditor!.editor!.getSelection() 
 			let selectionFirstLine = selection.split("\n")[0]
 			let shortenedFirstLine = selectionFirstLine.slice(0, 40)
 			if (shortenedFirstLine.length < selectionFirstLine.length) {
 				shortenedFirstLine = shortenedFirstLine + "…"
 			}
-			let selectionQuote = "> " + selection.replaceAll("\n", "\n> ")
-			let selectionHighlight = "==" + selection.replaceAll("\n", "==\n==") + "=="
-			selectionHighlight = selectionHighlight.replaceAll("====", "")
+			let selectionQuote = "> " + selection.replace(/\n/g, "\n> ")
+			let selectionHighlight = "==" + selection.replace(/\n/g, "==\n==") + "=="
+			selectionHighlight = selectionHighlight.replace(/====/g, "")
 
 
-			let properties = this.app.workspace.activeEditor.metadataEditor.properties
-			let sideNotesProp = properties.find(p => p.key == "Примечания") 
+			let properties
+			await this.app.fileManager.processFrontMatter(currentFile!, f => {properties = f})
+			let sideNotesProp = properties!["Примечания"]
+
+			//let properties = this.app.workspace.activeEditor!.metadataEditor.properties
+			//let sideNotesProp = properties.find(p => p.key == "Примечания") 
 			let sideNotesLink = ""
 
 			if (sideNotesProp && sideNotesProp.value) {
@@ -74,19 +88,19 @@ export default class MyPlugin extends Plugin {
 			} else {
 
 				sideNotesLink = currentFolder + "/" + currentName + " — примечания"
-				await this.app.fileManager.processFrontMatter(currentFile, (frontmatter) => { 
+				await this.app.fileManager.processFrontMatter(currentFile!, (frontmatter) => { 
 						frontmatter["Примечания"] = sideNotesLink
 					})
 			}
 			
-			let sideNotesFile = this.app.vault.getAbstractFileByPath(sideNotesLink + ".md")
+			let sideNotesFile = this.app.vault.getFiles().find(f => f.path == sideNotesLink + ".md")
 			if (!sideNotesFile) {
 				sideNotesFile = await this.app.vault.create(currentFolder + "/" + currentName + " — примечания" + ".md", "")
 			}
 
 			let sideNotesContent = await this.app.vault.read(sideNotesFile)
 
-			const checkHeader = (header, headerNum) => {
+			const checkHeader = (header : string, headerNum : number) : string => {
 				let re = new RegExp(header)
 				if (re.test(sideNotesContent)) {
 					re = new RegExp(header + " " + headerNum)
@@ -102,7 +116,8 @@ export default class MyPlugin extends Plugin {
 			await this.app.vault.modify(sideNotesFile, sideNotesContent + "\n\n##" + header + "\n" + selectionQuote)
 			let insertLink = "[[" + sideNotesLink + header + "|📝]]"
 
-			await this.app.workspace.activeEditor.editor.replaceSelection(selectionHighlight + " " + insertLink)
+
+			this.app.workspace.activeEditor!.editor!.replaceSelection(selectionHighlight + " " + insertLink)
 
 		}
 
