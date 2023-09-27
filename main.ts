@@ -25,9 +25,18 @@ export default class MyPlugin extends Plugin {
 
 
 
-			let properties
+
+
+			interface GenericObject {
+				[key: string]: any,
+			 }
+
+
+
+
+			let properties : GenericObject = {}
 			await this.app.fileManager.processFrontMatter(currentFile!, f => {properties = f})
-			let sideNotesProp = properties!["Примечания"]
+			let sideNotesProp = properties["Примечания"]
 
 
 
@@ -74,9 +83,17 @@ export default class MyPlugin extends Plugin {
 			selectionHighlight = selectionHighlight.replace(/====/g, "")
 
 
-			let properties
+
+
+
+			interface GenericObject {
+				[key: string]: any,
+			 }
+
+
+			let properties : GenericObject = {}
 			await this.app.fileManager.processFrontMatter(currentFile!, f => {properties = f})
-			let sideNotesProp = properties!["Примечания"]
+			let sideNotesProp = properties["Примечания"]
 
 			//let properties = this.app.workspace.activeEditor!.metadataEditor.properties
 			//let sideNotesProp = properties.find(p => p.key == "Примечания") 
