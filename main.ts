@@ -18,12 +18,14 @@ export default class MyPlugin extends Plugin {
 		const openDailyAtRight = async () => {
 			let sideLeaf = await this.app.workspace.createLeafBySplit(this.app.workspace.getMostRecentLeaf()!, "vertical");
 			await this.app.workspace.setActiveLeaf(sideLeaf)
+			// @ts-ignore
 			await this.app.commands.executeCommandById("daily-notes")
 		  };
 	  
 	  
 	  
 		  const saveQuoteToDaily = async () => {
+			// @ts-ignore
 			let dailyOptions = this.app.internalPlugins.plugins["daily-notes"].instance.options
 	  
 			let dailyFolder = dailyOptions.folder
@@ -50,7 +52,8 @@ export default class MyPlugin extends Plugin {
 	  
 	  
 		  const saveLinkToDaily = async () => {
-	  
+
+			// @ts-ignore	  
 			let dailyOptions = this.app.internalPlugins.plugins["daily-notes"].instance.options
 			let dailyFolder = dailyOptions.folder
 			let dailyFormat = dailyOptions.format
