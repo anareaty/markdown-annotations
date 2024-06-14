@@ -17,13 +17,13 @@ export default class MyPlugin extends Plugin {
 
 		const openDailyAtRight = async () => {
 			let sideLeaf = await this.app.workspace.createLeafBySplit(this.app.workspace.getMostRecentLeaf()!, "vertical");
-			await this.app.workspace.setActiveLeaf(sideLeaf)
+			this.app.workspace.setActiveLeaf(sideLeaf)
 			// @ts-ignore
 			await this.app.commands.executeCommandById("daily-notes")
 		  };
-	  
-	  
-		  const saveQuoteToDaily = async () => {
+
+
+		  const getQuoteFile = async () => {
 			// @ts-ignore
 			let dailyOptions = this.app.internalPlugins.plugins["daily-notes"].instance.options
 	  
@@ -31,56 +31,217 @@ export default class MyPlugin extends Plugin {
 			let dailyFormat = dailyOptions.format
 			let today = window.moment().format(dailyFormat)
 			let dailyPath = dailyFolder + "/" + today + ".md"
-	  
-			let selection = this.app.workspace.activeEditor!.editor!.getSelection();
-			let selectionQuote = "> " + selection.replace(/\n/g, "\n> ");
-	  
-			let selectionHighlight = "==" + selection.replace(/\n/g, "==\n==") + "==";
-			selectionHighlight = selectionHighlight.replace(/====/g, "");
-	  
+
 			let dailyFile = this.app.vault.getFiles().find((f) => f.path == dailyPath);
 			if (!dailyFile) {
 			  dailyFile = await this.app.vault.create(dailyPath, "");
 			}
-	  
-			let dailyContent = await this.app.vault.read(dailyFile);
-	  
-			await this.app.vault.modify(dailyFile, dailyContent + "\n" + selectionQuote + "\n\n");
-			this.app.workspace.activeEditor!.editor!.replaceSelection(selectionHighlight);
-		  };
-	  
-	  
-		  const saveLinkToDaily = async () => {
-			// @ts-ignore	  
-			let dailyOptions = this.app.internalPlugins.plugins["daily-notes"].instance.options
-			let dailyFolder = dailyOptions.folder
-			let dailyFormat = dailyOptions.format
-			let today = window.moment().format(dailyFormat)
-			let dailyPath = dailyFolder + "/" + today + ".md"
-			let dailyFile = this.app.vault.getFiles().find((f) => f.path == dailyPath);
-			if (!dailyFile) {
-			  dailyFile = await this.app.vault.create(dailyPath, "");
+
+			return dailyFile
+		  }
+
+
+
+		  const generateBlockId = () => {
+			return "^" + Math.random().toString(36).substr(2, 6);
+
+		  }
+
+
+		  const setBlockId = () => {
+			let myEditor = this.app.workspace.activeEditor!.editor!
+			let line = myEditor.getCursor("to").line
+			let linetext = myEditor.getLine(line)
+			let ch = linetext.length
+			let blockId = generateBlockId()
+
+			let sections = this.app.metadataCache.getFileCache(this.app.workspace.getActiveFile()!)!.sections
+
+			let block = sections!.find(s => s.position.start.line <= line && s.position.end.line >= line)
+
+			if (block!.id) {
+				blockId = "^" + block!.id
+			} else {
+				myEditor.replaceRange(" " + blockId, {line: block!.position.end.line, ch: block!.position.end.col})
 			}
-			let dailyContent = await this.app.vault.read(dailyFile);
-	  
+
+			return blockId
+		}
+
+
+		const setBacklink = (quoteFile: TFile, blockId2: string, formatting: string) => {
+
+			let link = this.app.fileManager.generateMarkdownLink(quoteFile, "", "#" + blockId2, "📝")
+			let myEditor = this.app.workspace.activeEditor!.editor!
+			let cursorStart = myEditor.getCursor("from")
+			let cursorEnd = myEditor.getCursor("to")
+			let offset = formatting.length
+			cursorEnd.ch = cursorEnd.ch + offset
+			let selection = myEditor.getSelection();
+			myEditor.replaceRange(selection + formatting + " " + link, cursorStart, cursorEnd)
+
+		  }
+
+
+
+
+		const createCalloutPart = (blockId: string) => {
 			let currentFile = this.app.workspace.activeEditor!.file;
 			let fileName = currentFile!.basename
 			let filePath = currentFile!.path.replace(".md", "")
-			let properties
-			await this.app.fileManager.processFrontMatter(currentFile!, (frontmatter) => {
-			  properties = frontmatter;
-			});
-	  
-			let link = ""
-	  
-			if (properties && properties["Источник"]) {
-			  link = "## " + "[" + fileName + "](" + properties["Источник"] + ")"
-			} else {
-			  link = "## " + "[[" + filePath + "|" + fileName + "]]"
-			}
-	  
-			await this.app.vault.modify(dailyFile, dailyContent + "\n\n" + link + "\n");
-		  };
+			let link = "[[" + filePath + "#" + blockId + "|" + fileName + "]]"
+			let selection = this.app.workspace.activeEditor!.editor!.getSelection();
+			return link + "\n> " + selection.replace(/\n/g, "\n> ")
+		}
+
+
+
+		  const setHighlight_1 = () => {
+			// @ts-ignore
+			this.app.workspace.activeEditor.editor.toggleMarkdownFormatting("highlight")
+		  }
+
+		  const setHighlight_2 = () => {
+			// @ts-ignore
+			this.app.workspace.activeEditor.editor.toggleMarkdownFormatting("highlight")
+			// @ts-ignore
+			this.app.workspace.activeEditor.editor.toggleMarkdownFormatting("italic")
+
+			// @ts-ignore
+			let selection = this.app.workspace.activeEditor.editor.getSelection().replaceAll(/==\*([ ]*)\n/mgsi, "*==$1\n").replaceAll(/\n([ ]*)\*==/mgsi, "\n$1==*")
+			this.app.workspace.activeEditor!.editor!.replaceSelection(selection)
+		  }
+
+
+		  const setHighlight_3 = () => {
+			// @ts-ignore
+			this.app.workspace.activeEditor.editor.toggleMarkdownFormatting("highlight")
+			// @ts-ignore
+			this.app.workspace.activeEditor.editor.toggleMarkdownFormatting("bold")
+
+			// @ts-ignore
+			let selection = this.app.workspace.activeEditor.editor.getSelection().replaceAll(/==\*\*([ ]*)\n/mgsi, "**==$1\n").replaceAll(/\n([ ]*)\*\*==/mgsi, "\n$1==**")
+			this.app.workspace.activeEditor!.editor!.replaceSelection(selection)
+		  }	  
+
+		  const setHighlight_4 = () => {
+			// @ts-ignore
+			this.app.workspace.activeEditor.editor.toggleMarkdownFormatting("highlight")
+			// @ts-ignore
+			this.app.workspace.activeEditor.editor.toggleMarkdownFormatting("bold")
+			// @ts-ignore
+			this.app.workspace.activeEditor.editor.toggleMarkdownFormatting("italic")
+
+
+			// @ts-ignore
+			let selection = this.app.workspace.activeEditor.editor.getSelection().replaceAll(/==\*\*\*([ ]*)\n/mgsi, "***==$1\n").replaceAll(/\n([ ]*)\*\*\*==/mgsi, "\n$1==***")
+			this.app.workspace.activeEditor!.editor!.replaceSelection(selection)
+		  }
+		  
+		  
+
+
+		
+
+
+
+		const saveCalloutToFile_1 = async () => {
+
+		let blockId = setBlockId()
+
+		let calloutPart = createCalloutPart(blockId)
+		
+
+		let quoteFile = await getQuoteFile()
+		let content = await this.app.vault.read(quoteFile);
+		
+		let callout = ">[!quote|quote_1] " + calloutPart
+		setHighlight_1()
+
+		await this.app.vault.modify(quoteFile, content + "\n" + callout + "\n\n");
+
+		};
+
+
+
+
+
+
+
+		const saveCalloutToFile_2 = async () => {
+
+			let blockId = setBlockId()
+			let calloutPart = createCalloutPart(blockId)
+			
+
+			let quoteFile = await getQuoteFile()
+			let content = await this.app.vault.read(quoteFile);
+			
+			let callout = ">[!quote|quote_2] " + calloutPart
+			setHighlight_2()
+
+			await this.app.vault.modify(quoteFile, content + "\n" + callout + "\n\n");
+
+		};
+
+
+		const saveCalloutToFile_3 = async () => {
+
+			let blockId = setBlockId()
+			let calloutPart = createCalloutPart(blockId)
+			
+
+			let quoteFile = await getQuoteFile()
+			let content = await this.app.vault.read(quoteFile);
+			
+			let callout = ">[!quote|quote_3] " + calloutPart
+			setHighlight_3()
+
+			await this.app.vault.modify(quoteFile, content + "\n" + callout + "\n\n");
+
+		};
+					
+					
+		const saveCalloutToFile_4 = async () => {
+
+			let blockId = setBlockId()
+			let calloutPart = createCalloutPart(blockId)
+			
+
+			let quoteFile = await getQuoteFile()
+			let content = await this.app.vault.read(quoteFile);
+			
+			let callout = ">[!quote|quote_4] " + calloutPart
+			setHighlight_4()
+	
+			await this.app.vault.modify(quoteFile, content + "\n" + callout + "\n\n");
+
+		};	
+		
+		
+
+
+		const addComment = async () => {
+
+			let blockId = setBlockId()
+			let blockId2 = generateBlockId()
+			
+
+			let quoteFile = await getQuoteFile()
+			let content = await this.app.vault.read(quoteFile);
+					
+			setBacklink(quoteFile, blockId2, "")
+
+			let currentFile = this.app.workspace.getActiveFile()
+
+			let link = this.app.fileManager.generateMarkdownLink(currentFile!, "", "#" + blockId, currentFile!.basename)
+
+			await this.app.vault.modify(quoteFile, content + "\n- 📝 " + link + " " + blockId2 + "\n	- Комментарий\n\n");
+
+		};
+
+
+		
 
 
 
@@ -91,20 +252,52 @@ export default class MyPlugin extends Plugin {
 			  await openDailyAtRight();
 			}
 		  });
-	  
+	
+
+
 		  this.addCommand({
-			id: "save-quote-to-daily",
-			name: "Сохранить цитату в ежедневную заметку",
+			id: "save-callout-1",
+			name: "Сохранить цитату 1",
 			editorCallback: async (editor, view) => {
-			  await saveQuoteToDaily();
+			  await saveCalloutToFile_1();
 			}
 		  });
 	  
+
+
 		  this.addCommand({
-			id: "save-link-to-daily",
-			name: "Сохранить ссылку в ежедневную заметку как заголовок",
+			id: "save-callout-2",
+			name: "Сохранить цитату 2",
 			editorCallback: async (editor, view) => {
-			  await saveLinkToDaily();
+			  await saveCalloutToFile_2();
+			}
+		  });
+
+
+		  this.addCommand({
+			id: "save-callout-3",
+			name: "Сохранить цитату 3",
+			editorCallback: async (editor, view) => {
+			  await saveCalloutToFile_3();
+			}
+		  });
+
+
+
+		  this.addCommand({
+			id: "save-callout-4",
+			name: "Сохранить цитату 4",
+			editorCallback: async (editor, view) => {
+			  await saveCalloutToFile_4();
+			}
+		  });
+
+
+		  this.addCommand({
+			id: "add-comment",
+			name: "Добавить комментарий",
+			editorCallback: async (editor, view) => {
+			  await addComment();
 			}
 		  });
 	  
@@ -120,25 +313,57 @@ export default class MyPlugin extends Plugin {
 			  });
 			})
 		  );
+
 		  this.registerEvent(
 			this.app.workspace.on("editor-menu", (menu, editor, view) => {
 			  menu.addItem((item) => {
-				item.setTitle("Сохранить цитату в ежедневную заметку").setIcon("quote").onClick(async () => {
-				  await saveQuoteToDaily();
+				item.setTitle("Сохранить цитату 1").setIcon("quote").onClick(async () => {
+				  await saveCalloutToFile_1();
 				});
 			  });
 			})
 		  );
+
 		  this.registerEvent(
 			this.app.workspace.on("editor-menu", (menu, editor, view) => {
 			  menu.addItem((item) => {
-				item.setTitle("Сохранить ссылку в ежедневную заметку как заголовок").setIcon("link").onClick(async () => {
-				  await saveLinkToDaily();
+				item.setTitle("Сохранить цитату 2").setIcon("quote").onClick(async () => {
+				  await saveCalloutToFile_2();
 				});
 			  });
 			})
 		  );
-		
+		  
+		  
+		  this.registerEvent(
+			this.app.workspace.on("editor-menu", (menu, editor, view) => {
+			  menu.addItem((item) => {
+				item.setTitle("Сохранить цитату 3").setIcon("quote").onClick(async () => {
+				  await saveCalloutToFile_3();
+				});
+			  });
+			})
+		  );
+
+		  this.registerEvent(
+			this.app.workspace.on("editor-menu", (menu, editor, view) => {
+			  menu.addItem((item) => {
+				item.setTitle("Сохранить цитату 4").setIcon("quote").onClick(async () => {
+				  await saveCalloutToFile_4();
+				});
+			  });
+			})
+		  );
+
+		  this.registerEvent(
+			this.app.workspace.on("editor-menu", (menu, editor, view) => {
+			  menu.addItem((item) => {
+				item.setTitle("Добавить комментарий").setIcon("quote").onClick(async () => {
+				  await addComment();
+				});
+			  });
+			})
+		  );
 
 
 
