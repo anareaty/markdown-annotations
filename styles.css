@@ -1,8 +1,109 @@
-/*
+/* Editor menu icons colors*/
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
 
-If your plugin does not need CSS, delete this file.
+.svg-icon.quote-1 {
+    color: rgb(var(--quote-color-rgb-1));
+}
 
-*/
+.svg-icon.quote-2 {
+    color: rgb(var(--quote-color-rgb-2));
+}
+
+.svg-icon.quote-3 {
+    color: rgb(var(--quote-color-rgb-3));
+}
+
+.svg-icon.quote-4 {
+    color: rgb(var(--quote-color-rgb-4));
+}
+
+
+
+/* Highlights colors */
+
+/* normal highlight*/
+
+body.extra-highlights-colors {
+    --text-highlight-bg: rgba(var(--quote-color-rgb-1), 0.2);
+}
+
+
+/* highlight italic = purple highlight */
+
+body.extra-highlights-colors .cm-highlight.cm-em,
+body.extra-highlights-colors .cm-highlight.cm-em + .cm-formatting, 
+body.extra-highlights-colors .cm-formatting:has(+ .cm-highlight.cm-em),
+body.extra-highlights-colors mark:has(em:only-child), 
+body.extra-highlights-colors em > mark {
+  --text-highlight-bg: rgba(var(--quote-color-rgb-2), 0.2);
+  font-style: normal;
+}
+
+body.extra-highlights-colors mark > em {
+  font-style: normal;
+}
+
+
+/* highlight bold = green highlight */
+
+body.extra-highlights-colors .cm-highlight.cm-strong, 
+body.extra-highlights-colors .cm-highlight.cm-strong + .cm-formatting, 
+body.extra-highlights-colors .cm-formatting:has(+ .cm-highlight.cm-strong),
+body.extra-highlights-colors mark:has(strong:only-child), 
+body.extra-highlights-colors strong > mark {
+  --text-highlight-bg: rgba(var(--quote-color-rgb-3), 0.2);
+  font-weight: normal;
+}
+
+body.extra-highlights-colors mark > strong {
+  font-weight: normal;
+}
+
+
+/* highlight bold italic = red highlight */
+
+body.extra-highlights-colors .cm-highlight.cm-em.cm-strong, 
+body.extra-highlights-colors .cm-highlight.cm-em.cm-strong + .cm-formatting, 
+body.extra-highlights-colors .cm-formatting:has(+ .cm-highlight.cm-em.cm-strong),
+body.extra-highlights-colors strong > em > mark, 
+body.extra-highlights-colors mark:has(strong:only-child > em:only-child) {
+  --text-highlight-bg: rgba(var(--quote-color-rgb-4), 0.2);
+  font-style: normal;
+}
+
+body.extra-highlights-colors strong > em:has(mark:only-child), 
+body.extra-highlights-colors mark > strong > em {
+  font-style: normal;
+}
+
+
+
+
+
+/* Callouts colors */
+
+.callout[data-callout="quote"][data-callout-metadata="quote_1"] {
+    --callout-color: var(--quote-color-rgb-1);
+}
+
+.callout[data-callout="quote"][data-callout-metadata="quote_2"] {
+    --callout-color: var(--quote-color-rgb-2);
+}
+
+.callout[data-callout="quote"][data-callout-metadata="quote_3"] {
+    --callout-color: var(--quote-color-rgb-3);
+}
+
+.callout[data-callout="quote"][data-callout-metadata="quote_4"] {
+    --callout-color: var(--quote-color-rgb-4);
+}
+
+
+.callout[data-callout="quote"][data-callout-metadata*="quote_"] .callout-title {
+    --link-color: rgba(var(--callout-color), 1);
+    --link-unresolved-color: rgba(var(--callout-color), 1);
+    --link-color-hover: rgba(var(--callout-color), 0.8);
+    --link-external-color: rgba(var(--callout-color), 1);
+    --link-external-color-hover: rgba(var(--callout-color), 0.8);
+}
+

@@ -1,6 +1,6 @@
 {
-	"id": "copy-quote",
-	"name": "Markdown Annotation",
+	"id": "markdown-annotations",
+	"name": "Markdown Annotations",
 	"version": "1.2.0",
 	"minAppVersion": "0.15.0",
 	"description": "This is a simple plugin that make it easier to copy quotes from the note to another note.",
