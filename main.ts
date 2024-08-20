@@ -204,7 +204,8 @@ export default class MdAnnotationsPlugin extends Plugin {
 					if (!this.app.vault.getAbstractFileByPath(dailyFolder) && dailyFolder != "") {
 						await this.app.vault.createFolder(dailyFolder)
 					}
-					file = await this.app.vault.create(dailyPath, dailyTemplateContent);
+					//file = await this.app.vault.create(dailyPath, dailyTemplateContent);
+					file = await createFile(dailyPath, dailyTemplateContent)
 				}
 
 			} else if (fileChoice == "special") {
@@ -240,7 +241,8 @@ export default class MdAnnotationsPlugin extends Plugin {
 
 			
 
-					file = await this.app.vault.create(path, templateContent);
+					//file = await this.app.vault.create(path, templateContent);
+					file = await createFile(path, templateContent)
 				}
 
 			} 
@@ -296,6 +298,14 @@ export default class MdAnnotationsPlugin extends Plugin {
 		  }
 
 
+
+
+		const createFile = async (path: string, data: string) => {
+			const timeout = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+			let file = await this.app.vault.create(path, data);
+			await timeout(500)
+			return file
+		}
 
 
 		const createCalloutPart = (blockId: string) => {

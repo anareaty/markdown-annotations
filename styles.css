@@ -82,19 +82,19 @@ body.extra-highlights-colors mark > strong > em {
 
 /* Callouts colors */
 
-.callout[data-callout="quote"][data-callout-metadata="quote_1"] {
+.callout[data-callout="quote"][data-callout-metadata*="quote_1"] {
     --callout-color: var(--quote-color-rgb-1);
 }
 
-.callout[data-callout="quote"][data-callout-metadata="quote_2"] {
+.callout[data-callout="quote"][data-callout-metadata*="quote_2"] {
     --callout-color: var(--quote-color-rgb-2);
 }
 
-.callout[data-callout="quote"][data-callout-metadata="quote_3"] {
+.callout[data-callout="quote"][data-callout-metadata*="quote_3"] {
     --callout-color: var(--quote-color-rgb-3);
 }
 
-.callout[data-callout="quote"][data-callout-metadata="quote_4"] {
+.callout[data-callout="quote"][data-callout-metadata*="quote_4"] {
     --callout-color: var(--quote-color-rgb-4);
 }
 
